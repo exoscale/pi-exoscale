@@ -206,6 +206,36 @@ test("mapModels maps an OpenAI-compatible list to pi chat models", () => {
   assert.equal(second.contextWindow > 0, true);
   assert.equal(second.maxTokens > 0, true);
   assert.equal(second.maxTokens <= second.contextWindow, true);
+  // No name reported: the display name derives from the model ID.
+  assert.equal(second.name, "Qwen3.8-27B");
+});
+
+test("toModel reads the Exoscale fields, preferring them over the vLLM-style ones", () => {
+  const input = { provider: "exo-de-fra-1", endpoint: DEFAULT_ENDPOINT };
+  const model = toModel(
+    {
+      id: "Qwen3.8-27B",
+      name: "Qwen3.8-27B",
+      context_length: 262144,
+      max_model_len: 32768,
+      max_output_tokens: 4096,
+      max_completion_tokens: 8192,
+      reasoning: true,
+    },
+    input,
+  );
+  assert.equal(model?.contextWindow, 262144);
+  assert.equal(model?.maxTokens, 4096);
+  assert.equal(model?.name, "Qwen3.8-27B");
+  assert.equal(model?.reasoning, true);
+});
+
+test("toModel falls back to the vLLM-style fields when the Exoscale fields are absent", () => {
+  const input = { provider: "exo-de-fra-1", endpoint: DEFAULT_ENDPOINT };
+  const model = toModel({ id: "nvidia/Qwen3.8-27B-NVFP4", max_model_len: 4096, max_completion_tokens: 512 }, input);
+  assert.equal(model?.contextWindow, 4096);
+  assert.equal(model?.maxTokens, 512);
+  assert.equal(model?.reasoning, false);
 });
 
 test("mapModels returns an empty list for malformed bodies", () => {
@@ -218,12 +248,13 @@ test("mapModels returns an empty list for malformed bodies", () => {
 });
 
 test("toModel clamps the reported output limit to the context window", () => {
-  const model = toModel({ id: "m", max_model_len: 4096, max_completion_tokens: 999999 }, {
-    provider: "exo-de-fra-1",
-    endpoint: DEFAULT_ENDPOINT,
-  });
+  const input = { provider: "exo-de-fra-1", endpoint: DEFAULT_ENDPOINT };
+  const model = toModel({ id: "m", max_model_len: 4096, max_completion_tokens: 999999 }, input);
   assert.equal(model?.contextWindow, 4096);
   assert.equal(model?.maxTokens, 4096);
+  const newStyle = toModel({ id: "m", context_length: 4096, max_output_tokens: 999999 }, input);
+  assert.equal(newStyle?.contextWindow, 4096);
+  assert.equal(newStyle?.maxTokens, 4096);
   assert.equal(toModel({ id: "" }, { provider: "p", endpoint: DEFAULT_ENDPOINT }), undefined);
 });
 

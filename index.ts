@@ -196,24 +196,30 @@ function hostnameOf(url: string): string {
 }
 
 // Maps an OpenAI-compatible /models entry to a pi chat model. Unknown or
-// malformed entries return undefined. Limits come from max_model_len /
-// max_completion_tokens when the backend reports them, so a model the
-// backend does not describe still gets usable defaults.
+// malformed entries return undefined. Limits come from context_length /
+// max_output_tokens, falling back to the vLLM-style max_model_len /
+// max_completion_tokens, so a model the backend does not describe still
+// gets usable defaults. The name and the reasoning flag come from the
+// entry when the backend reports them.
 export function toModel(entry: unknown, input: { provider: string; endpoint: string }): ExoModel | undefined {
   if (!entry || typeof entry !== "object") return undefined;
   const record = entry as Record<string, unknown>;
   const id = typeof record.id === "string" ? record.id : undefined;
   if (!id) return undefined;
-  const contextWindow = positiveInteger(record.max_model_len) ?? DEFAULT_CONTEXT_WINDOW;
-  const maxTokens = Math.min(positiveInteger(record.max_completion_tokens) ?? DEFAULT_MAX_OUTPUT, contextWindow);
+  const contextWindow =
+    positiveInteger(record.context_length) ?? positiveInteger(record.max_model_len) ?? DEFAULT_CONTEXT_WINDOW;
+  const maxTokens = Math.min(
+    positiveInteger(record.max_output_tokens) ?? positiveInteger(record.max_completion_tokens) ?? DEFAULT_MAX_OUTPUT,
+    contextWindow,
+  );
   return {
     id,
-    name: displayName(id),
+    name: typeof record.name === "string" && record.name.trim() !== "" ? record.name : displayName(id),
     api: "openai-completions",
     provider: input.provider,
     baseUrl: input.endpoint,
     input: ["text"],
-    reasoning: false,
+    reasoning: record.reasoning === true,
     cost: { input: 0, output: 0, cacheRead: 0, cacheWrite: 0 },
     contextWindow,
     maxTokens,

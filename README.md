@@ -66,10 +66,12 @@ Exoscale AI API keys are zone-local, so `EXOSCALE_AI_API_KEY` applies only to
   `https://inference.<zone>.exoscale-cloud.com/v1`. Dedicated Inference
   endpoints of the same zone share the zone's provider.
 - Models come from `GET {endpoint}/models` with the zone's key. The
-  extension reads `max_model_len` and `max_completion_tokens` when the
-  endpoint reports them, and otherwise uses a 262144 token context and a
+  extension reads `context_length` and `max_output_tokens` when the
+  endpoint reports them, then the vLLM-style `max_model_len` and
+  `max_completion_tokens`, and otherwise uses a 262144 token context and a
   32768 token output limit. The output limit is never larger than the
-  context window.
+  context window. The model name and the reasoning flag come from the
+  endpoint when it reports them.
 - A failed endpoint keeps the models it reported before, so one broken
   endpoint does not remove the models of the other endpoints. `/exo` prints
   the errors.
