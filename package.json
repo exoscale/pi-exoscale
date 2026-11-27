@@ -1,6 +1,6 @@
 {
   "name": "@exoscale/pi-exoscale",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "license": "Apache-2.0",
   "description": "Pi extension: Exoscale inference providers. Registers one provider per zone in /login (zone-local API key, optional Dedicated Inference endpoints) and discovers models live from {endpoint}/models — no provider or model config in models.json.",
   "type": "module",
