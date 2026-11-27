@@ -7,11 +7,17 @@ appear in `/model`. You do not add provider or model entries to `models.json`.
 ## Install
 
 ```sh
+pi install npm:@exoscale/pi-exoscale
+```
+
+Or from a git checkout:
+
+```sh
 git clone https://github.com/exoscale/pi-exoscale ~/path/to/pi-exoscale
 pi install ~/path/to/pi-exoscale
 ```
 
-`pi install` writes the path to `~/.pi/agent/settings.json`. Restart Pi.
+`pi install` writes the source to `~/.pi/agent/settings.json`. Restart Pi.
 
 To try the extension without installing it, pass it on the command line:
 
